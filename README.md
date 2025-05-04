@@ -1,13 +1,15 @@
-### Orange Pi RV2 Home Router
+### Orange Pi RV2 Home WiFi/Wired Router
 
-Fast and simple way to make your [Orange Pi RV2](http://www.orangepi.org/orangepiwiki/index.php/Orange_Pi_RV2) SBC device as a home router based on `Ubuntu 24.04`, in next few steps (currently I use `Linux Mint 22.1` as a host box):
+<img src="doc/opi_rv2_painting.png" alt="Orange Pi RV2 painting" style="width:300px;"/>
+
+Fast and simple way to make your [Orange Pi RV2](http://www.orangepi.org/orangepiwiki/index.php/Orange_Pi_RV2) SBC device as a home WiFi and wired router based on `Ubuntu 24.04`, in next few steps (currently I use `Linux Mint 22.1` as a host box):
 
 1. SD Card formatting (`Ubuntu` uses less 2 Gb of space):
    ```shell
    ➜ mintstick -m format
    ```
 
-2. Download `Ubuntu Image` from official `orangepi.org`'s [Official Images](http://www.orangepi.org/html/hardWare/computerAndMicrocontrollers/service-and-support/Orange-Pi-RV2.html) (I used `Orangepirv2_1.0.0_ubuntu_noble_server_linux6.6.63.img` server image), unarchive it, and check MD5 checksum:
+2. Download `Ubuntu Image` from `orangepi.org`'s [Official Images](http://www.orangepi.org/html/hardWare/computerAndMicrocontrollers/service-and-support/Orange-Pi-RV2.html) (I used `Orangepirv2_1.0.0_ubuntu_noble_server_linux6.6.63.img` server image), unarchive it, and check MD5 checksum:
    ```shell
    ➜ 7z e ./Orangepirv2_1.0.0_ubuntu_noble_server_linux6.6.63.7z
    ➜ md5sum ./Orangepirv2_1.0.0_ubuntu_noble_server_linux6.6.63.img
