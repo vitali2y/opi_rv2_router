@@ -21,6 +21,21 @@ apt update -y
 apt upgrade -y
 apt install -y iptables-persistent isc-dhcp-server
 
+echo "Configuring DNS..."
+rm -f /etc/resolv.conf
+ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+
+cat > /etc/systemd/resolved.conf <<EOF
+[Resolve]
+DNS=8.8.8.8 8.8.4.4 1.1.1.1
+FallbackDNS=208.67.222.222 208.67.220.220
+Domains=~.
+DNSSEC=allow-downgrade
+DNSOverTLS=opportunistic
+EOF
+
+systemctl restart systemd-resolved
+
 cat > /etc/network/interfaces <<EOF
 # Loopback
 auto lo
@@ -40,7 +55,7 @@ EOF
 echo "Setting up DHCP server..."
 cat > /etc/dhcp/dhcpd.conf <<EOF
 option domain-name "local";
-option domain-name-servers 8.8.8.8, 8.8.4.4;
+option domain-name-servers 192.168.10.1, 8.8.8.8;
 
 default-lease-time 600;
 max-lease-time 7200;
@@ -90,31 +105,30 @@ WantedBy=multi-user.target
 EOF
 
 echo "WiFi Setup..."
-F=/etc/systemd/system/create_ap.service
-cat > $F <<EOF
+cat > /etc/systemd/system/create_ap.service <<EOF
 [Unit]
 Description=Orange Pi RV2 AP Service
-After=network.target
+After=network.target router.service
+Requires=router.service
+StartLimitIntervalSec=500
+StartLimitBurst=5
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/create_ap -m nat wlan0 end0 wifiname wifipass
 Restart=on-failure
+RestartSec=5s
+ExecStart=/usr/local/bin/create_ap -m nat wlan0 end0 $1 $2
+ExecStop=/usr/local/bin/create_ap --stop wlan0
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-FTMP=$F.tmp
-sed "s/wifiname/$1/g" $F > $FTMP && mv $FTMP $F
-sed "s/wifipass/$2/g" $F > $FTMP && mv $FTMP $F
-echo "WiFi hotspot: "$1" / "$2
-
 echo "Enabling services..."
 systemctl daemon-reload
 systemctl enable router.service
 systemctl enable isc-dhcp-server
-systemctl enable create_ap
+systemctl enable create_ap.service
 
 echo "Making IP forwarding persistent..."
 echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
@@ -122,24 +136,23 @@ sysctl -p
 
 echo "Saving iptables rules..."
 netfilter-persistent save
+netfilter-persistent reload
 
-# echo "Disabling IPv6 on LAN interface..."
-# echo "net.ipv6.conf.end1.disable_ipv6=1" >> /etc/sysctl.conf
-# sysctl -p
+# echo "Configuring WiFi regulatory domain..."
+# echo 'REGDOMAIN=00' > /etc/default/crda  # 00 is world regulatory domain
 
 echo "Restarting services..."
 systemctl restart networking
 systemctl restart router.service
 systemctl restart isc-dhcp-server
-systemctl restart create_ap
-
-# systemctl stop NetworkManager
-# systemctl disable NetworkManager
+sleep 3
+systemctl restart create_ap.service
 
 echo ""
 echo "Setup completed successfully: Orange Pi RV2 is now configured as a router!"
 echo "WAN (Internet): end0"
 echo "LAN (Local): end1 (192.168.10.1)"
-echo "On connected PC: configure DHCP manually (IP: 192.168.10.10, netmask: 255.255.255.0, gateway: 192.168.10.1, DNS: 192.168.10.1,8.8.8.8), connect cable to router's end1 port!"
+echo "WiFi Hotspot: $1 / $2"
+echo "On connected PC: configure DHCP manually (IP: 192.168.10.10, netmask: 255.255.255.0, gateway: 192.168.10.1, DNS: 192.168.10.1,8.8.8.8)"
 echo "Enjoy!"
 echo "P. S. Do not forget to reboot both PC and router, and change default password for 'orangepi' user!"
