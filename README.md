@@ -56,9 +56,9 @@ Fast and simple way to make your [Orange Pi RV2](http://www.orangepi.org/orangep
    * gateway: *192.168.10.1*,
    * DNS: *192.168.10.1,8.8.8.8*.
 
-   Connect host's cable to router's `end1` port.
+   Connect host's (LAN) cable to router's `end1` (left from top) port.
 
-   Connect Internet cable to another router's `end0` port.
+   Connect Internet (WAN) cable to another router's `end0` (right from top) port.
 
    Router's WiFi hotspot is available as `<wifi_name>`!
 

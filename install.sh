@@ -148,10 +148,29 @@ systemctl restart isc-dhcp-server
 sleep 3
 systemctl restart create_ap.service
 
+echo "Setting up robust DHCP renewal service for end0..."
+cat << 'EOF' > /etc/systemd/system/fresh-dhcp-wan.service
+[Unit]
+Description=Force fresh DHCP on end0
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'dhclient -r end0 && sleep 2 && dhclient -nw end0'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable fresh-dhcp-wan.service
+echo "DHCP service 'fresh-dhcp-wan.service' installed and enabled"
+
 echo ""
 echo "Setup completed successfully: Orange Pi RV2 is now configured as a router!"
-echo "WAN (Internet): end0"
-echo "LAN (Local): end1 (192.168.10.1)"
+echo "WAN (Internet, right Ethernet port from top): end0"
+echo "LAN (Local, left Ethernet port from top): end1 (192.168.10.1)"
 echo "WiFi Hotspot: $1 / $2"
 echo "On connected PC: configure DHCP manually (IP: 192.168.10.10, netmask: 255.255.255.0, gateway: 192.168.10.1, DNS: 192.168.10.1,8.8.8.8)"
 echo "Enjoy!"
